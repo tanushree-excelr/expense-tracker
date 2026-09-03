@@ -1,0 +1,42 @@
+const mongoose = require('mongoose');
+const Expense = require('../models/expenseModel');
+
+const updateExpense = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { description, amount, category, date } = req.body;
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ message: 'Invalid expense ID' });
+    }
+
+    if (description !== undefined && description.trim() === '') {
+      return res.status(400).json({ message: 'Description cannot be empty' });
+    }
+
+    if (amount !== undefined && (typeof amount !== 'number' || amount <= 0)) {
+      return res.status(400).json({ message: 'Amount must be greater than 0' });
+    }
+
+    const expense = await Expense.findById(id);
+    if (!expense) {
+      return res.status(404).json({ message: 'Expense not found' });
+    }
+
+    if (description !== undefined) expense.description = description.trim();
+    if (amount !== undefined) expense.amount = amount;
+    if (category !== undefined) expense.category = category;
+    if (date !== undefined) expense.date = date;
+
+    const updatedExpense = await expense.save();
+
+    res.status(200).json({
+      message: 'Expense updated successfully',
+      expense: updatedExpense
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+module.exports = updateExpense;
