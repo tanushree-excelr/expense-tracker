@@ -7,6 +7,9 @@ const updateExpense = require('../controllers/updateExpense');
 const deleteExpense = require('../controllers/deleteExpense');
 const getExpenseSummary = require('../controllers/getExpenseSummary');
 const getMonthlySummary = require('../controllers/getMonthlySummary');
+const authMiddleware = require('../middleware/authMiddleware');
+
+router.use(authMiddleware);
 
 router.get('/summary', getExpenseSummary);
 router.get('/summary/month/:month', getMonthlySummary);

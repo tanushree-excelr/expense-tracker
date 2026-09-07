@@ -1,4 +1,29 @@
+const jwt = require('jsonwebtoken');
 const User = require('../models/userModel');
+
+const generateToken = (payload) => {
+  const secret = process.env.JWT_SECRET || 'expense_tracker_secret_jwt_key_2026_super_secure';
+  const expiresIn = process.env.JWT_EXPIRES_IN || '1d';
+  return jwt.sign(payload, secret, { expiresIn });
+};
+
+const sendAuthResponse = (res, statusCode, message, user) => {
+  const token = generateToken({ userId: user.userId, role: user.role });
+
+  res.cookie('token', token, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    maxAge: 24 * 60 * 60 * 1000
+  });
+
+  return res.status(statusCode).json({
+    message,
+    token,
+    userId: user.userId,
+    role: user.role
+  });
+};
 
 const userLogin = async (req, res) => {
   try {
@@ -11,7 +36,6 @@ const userLogin = async (req, res) => {
     let user = await User.findOne({ username: username.trim() });
 
     if (!user) {
-      
       user = await User.create({
         username: username.trim(),
         password,
@@ -23,8 +47,7 @@ const userLogin = async (req, res) => {
       }
     }
 
-    res.status(200).json({
-      message: 'User login successful',
+    return sendAuthResponse(res, 200, 'User login successful', {
       userId: user.username,
       role: 'user'
     });
@@ -41,21 +64,17 @@ const adminLogin = async (req, res) => {
       return res.status(400).json({ message: 'Username and password are required' });
     }
 
-    // Default admin credentials check: username "admin", password "admin123"
     if (username.trim() === 'admin' && password === 'admin123') {
-      return res.status(200).json({
-        message: 'Admin login successful',
+      return sendAuthResponse(res, 200, 'Admin login successful', {
         userId: 'admin',
         role: 'admin'
       });
     }
 
-    // check database if custom admin user exists
     const adminUser = await User.findOne({ username: username.trim(), role: 'admin' });
 
     if (adminUser && adminUser.password === password) {
-      return res.status(200).json({
-        message: 'Admin login successful',
+      return sendAuthResponse(res, 200, 'Admin login successful', {
         userId: adminUser.username,
         role: 'admin'
       });
@@ -67,7 +86,21 @@ const adminLogin = async (req, res) => {
   }
 };
 
+const logout = async (req, res) => {
+  try {
+    res.clearCookie('token', {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax'
+    });
+    return res.status(200).json({ message: 'Logged out successfully' });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 module.exports = {
   userLogin,
-  adminLogin
+  adminLogin,
+  logout
 };

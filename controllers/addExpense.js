@@ -2,11 +2,9 @@ const Expense = require('../models/expenseModel');
 
 const addExpense = async (req, res) => {
   try {
-    const { userId, role, description, amount, category, date } = req.body;
-
-    if (!userId || userId.trim() === '') {
-      return res.status(400).json({ message: 'User ID is required' });
-    }
+    const { description, amount, category, date } = req.body;
+    const userId = req.user.userId;
+    const role = req.user.role;
 
     if (!description || description.trim() === '') {
       return res.status(400).json({ message: 'Description cannot be empty' });
@@ -26,8 +24,8 @@ const addExpense = async (req, res) => {
     }
 
     const expense = await Expense.create({
-      userId: userId.trim(),
-      role: role === 'admin' ? 'admin' : 'user',
+      userId,
+      role,
       description: description.trim(),
       amount,
       category,

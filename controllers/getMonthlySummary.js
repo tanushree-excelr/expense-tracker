@@ -22,9 +22,12 @@ const getMonthlySummary = async (req, res) => {
       date: { $gte: startDate, $lte: endDate }
     };
 
- 
-    if (role !== 'admin' && userId) {
-      query.userId = userId;
+    if (req.user.role === 'admin') {
+      if (req.query.userId) {
+        query.userId = req.query.userId.trim();
+      }
+    } else {
+      query.userId = req.user.userId;
     }
 
     const expenses = await Expense.find(query);

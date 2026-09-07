@@ -23,8 +23,15 @@ const updateExpense = async (req, res) => {
       return res.status(404).json({ message: 'Expense not found' });
     }
 
-    if (userId !== undefined) expense.userId = userId.trim();
-    if (role !== undefined && ['user', 'admin'].includes(role)) expense.role = role;
+    if (req.user.role !== 'admin' && expense.userId !== req.user.userId) {
+      return res.status(403).json({ message: 'Access denied: You can only update your own expenses' });
+    }
+
+    if (req.user.role === 'admin') {
+      if (userId !== undefined) expense.userId = userId.trim();
+      if (role !== undefined && ['user', 'admin'].includes(role)) expense.role = role;
+    }
+
     if (description !== undefined) expense.description = description.trim();
     if (amount !== undefined) expense.amount = amount;
     if (category !== undefined) expense.category = category;

@@ -2,12 +2,14 @@ const Expense = require('../models/expenseModel');
 
 const getExpenseSummary = async (req, res) => {
   try {
-    const { userId, role } = req.query;
-
-  
     let filter = {};
-    if (role !== 'admin' && userId) {
-      filter.userId = userId;
+
+    if (req.user.role === 'admin') {
+      if (req.query.userId) {
+        filter.userId = req.query.userId.trim();
+      }
+    } else {
+      filter.userId = req.user.userId;
     }
 
     const expenses = await Expense.find(filter);
