@@ -2,6 +2,16 @@ const mongoose = require('mongoose');
 
 const expenseSchema = new mongoose.Schema(
   {
+    userId: {
+      type: String,
+      required: true,
+      trim: true
+    },
+    role: {
+      type: String,
+      enum: ['user', 'admin'],
+      default: 'user'
+    },
     description: {
       type: String,
       required: true,

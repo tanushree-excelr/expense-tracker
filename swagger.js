@@ -5,21 +5,117 @@ const swaggerDocument = {
   info: {
     title: 'Expense Tracker API',
     version: '1.0.0',
-    description: 'A simple beginner-level Expense Tracker REST API built with Node.js, Express, and MongoDB.'
+    description: 'A simple beginner-level Expense Tracker REST API built with Node.js, Express, and MongoDB, supporting user-specific tracking and admin views.'
   },
   servers: [
     {
-      url: 'http://localhost:3000',
-      description: 'Local Development Server'
+      url: '/',
+      description: 'Default Server'
     }
   ],
   tags: [
+    {
+      name: 'Authentication',
+      description: 'Login endpoints for User and Admin'
+    },
     {
       name: 'Expenses',
       description: 'Operations for managing expenses'
     }
   ],
   paths: {
+    '/api/auth/user-login': {
+      post: {
+        tags: ['Authentication'],
+        summary: 'User Login',
+        description: 'Authenticates a regular user and returns user details and role.',
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                required: ['username', 'password'],
+                properties: {
+                  username: { type: 'string', example: 'tanushree' },
+                  password: { type: 'string', example: 'password123' }
+                }
+              },
+              example: {
+                username: 'tanushree',
+                password: 'password123'
+              }
+            }
+          }
+        },
+        responses: {
+          '200': {
+            description: 'User login successful',
+            content: {
+              'application/json': {
+                example: {
+                  message: 'User login successful',
+                  userId: 'tanushree',
+                  role: 'user'
+                }
+              }
+            }
+          },
+          '400': {
+            description: 'Missing username or password'
+          },
+          '401': {
+            description: 'Invalid password'
+          }
+        }
+      }
+    },
+    '/api/auth/admin-login': {
+      post: {
+        tags: ['Authentication'],
+        summary: 'Admin Login',
+        description: 'Authenticates an administrator (default credentials: username "admin", password "admin123").',
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                required: ['username', 'password'],
+                properties: {
+                  username: { type: 'string', example: 'admin' },
+                  password: { type: 'string', example: 'admin123' }
+                }
+              },
+              example: {
+                username: 'admin',
+                password: 'admin123'
+              }
+            }
+          }
+        },
+        responses: {
+          '200': {
+            description: 'Admin login successful',
+            content: {
+              'application/json': {
+                example: {
+                  message: 'Admin login successful',
+                  userId: 'admin',
+                  role: 'admin'
+                }
+              }
+            }
+          },
+          '400': {
+            description: 'Missing username or password'
+          },
+          '401': {
+            description: 'Invalid admin credentials'
+          }
+        }
+      }
+    },
     '/api/expenses': {
       post: {
         tags: ['Expenses'],
@@ -31,8 +127,10 @@ const swaggerDocument = {
             'application/json': {
               schema: {
                 type: 'object',
-                required: ['description', 'amount'],
+                required: ['userId', 'description', 'amount'],
                 properties: {
+                  userId: { type: 'string', example: 'user123' },
+                  role: { type: 'string', enum: ['user', 'admin'], default: 'user', example: 'user' },
                   description: { type: 'string', example: 'Lunch' },
                   amount: { type: 'number', example: 20 },
                   category: { type: 'string', example: 'Food' },
@@ -40,6 +138,8 @@ const swaggerDocument = {
                 }
               },
               example: {
+                userId: 'user123',
+                role: 'user',
                 description: 'Lunch',
                 amount: 20,
                 category: 'Food'
@@ -54,18 +154,21 @@ const swaggerDocument = {
               'application/json': {
                 example: {
                   message: 'Expense added successfully',
-                  expense: { _id: '64e83c26fa2d192135a90101', description: 'Lunch', amount: 20, category: 'Food', date: '2026-09-03T10:00:00.000Z' }
+                  expense: {
+                    _id: '64e83c26fa2d192135a90101',
+                    userId: 'user123',
+                    role: 'user',
+                    description: 'Lunch',
+                    amount: 20,
+                    category: 'Food',
+                    date: '2026-09-03T10:00:00.000Z'
+                  }
                 }
               }
             }
           },
           '400': {
-            description: 'Validation error (missing description or invalid amount)',
-            content: {
-              'application/json': {
-                example: { message: 'Description cannot be empty' }
-              }
-            }
+            description: 'Validation error (missing description, amount, or userId)'
           },
           '500': {
             description: 'Internal Server Error'
@@ -75,27 +178,44 @@ const swaggerDocument = {
       get: {
         tags: ['Expenses'],
         summary: 'Get all expenses',
-        description: 'Retrieves a list of all recorded expenses, ordered by newest first.',
+        description: 'Retrieves expenses. Provide userId for personal expenses, or role=admin to view all users expenses.',
+        parameters: [
+          {
+            name: 'userId',
+            in: 'query',
+            required: false,
+            description: 'Filter expenses by userId',
+            schema: {
+              type: 'string',
+              example: 'user123'
+            }
+          },
+          {
+            name: 'role',
+            in: 'query',
+            required: false,
+            description: "Set to 'admin' to view all expenses across all users",
+            schema: {
+              type: 'string',
+              enum: ['user', 'admin'],
+              example: 'user'
+            }
+          }
+        ],
         responses: {
           '200': {
             description: 'A list of expenses',
             content: {
               'application/json': {
-
                 example: [
                   {
                     _id: '64e83c26fa2d192135a90101',
+                    userId: 'user123',
+                    role: 'user',
                     description: 'Lunch',
                     amount: 20,
                     category: 'Food',
                     date: '2026-09-03T10:00:00.000Z'
-                  },
-                  {
-                    _id: '64e83c26fa2d192135a90102',
-                    description: 'Metro Ticket',
-                    amount: 5,
-                    category: 'Transportation',
-                    date: '2026-09-03T08:30:00.000Z'
                   }
                 ]
               }
@@ -110,21 +230,38 @@ const swaggerDocument = {
     '/api/expenses/summary': {
       get: {
         tags: ['Expenses'],
-        summary: 'Get total summary of all expenses',
-        description: 'Returns the total monetary sum of all recorded expenses.',
+        summary: 'Get total summary of expenses',
+        description: 'Returns total monetary sum. Filter by userId for personal total, or role=admin for total across all users.',
+        parameters: [
+          {
+            name: 'userId',
+            in: 'query',
+            required: false,
+            description: 'Filter total summary by userId',
+            schema: {
+              type: 'string',
+              example: 'user123'
+            }
+          },
+          {
+            name: 'role',
+            in: 'query',
+            required: false,
+            description: "Set to 'admin' to view total of all users",
+            schema: {
+              type: 'string',
+              enum: ['user', 'admin'],
+              example: 'user'
+            }
+          }
+        ],
         responses: {
           '200': {
             description: 'Total expenses calculated successfully',
             content: {
               'application/json': {
-                schema: {
-                  type: 'object',
-                  properties: {
-                    totalExpenses: { type: 'number', example: 30 }
-                  }
-                },
                 example: {
-                  totalExpenses: 30
+                  totalExpenses: 20
                 }
               }
             }
@@ -139,7 +276,7 @@ const swaggerDocument = {
       get: {
         tags: ['Expenses'],
         summary: 'Get monthly summary for the current year',
-        description: 'Calculates the total expenses for a specific month (1-12) of the current year.',
+        description: 'Calculates total expenses for a specific month (1-12). Filter by userId or role=admin.',
         parameters: [
           {
             name: 'month',
@@ -150,7 +287,28 @@ const swaggerDocument = {
               type: 'integer',
               minimum: 1,
               maximum: 12,
-              example: 8
+              example: 9
+            }
+          },
+          {
+            name: 'userId',
+            in: 'query',
+            required: false,
+            description: 'Filter monthly summary by userId',
+            schema: {
+              type: 'string',
+              example: 'user123'
+            }
+          },
+          {
+            name: 'role',
+            in: 'query',
+            required: false,
+            description: "Set to 'admin' to view monthly total of all users",
+            schema: {
+              type: 'string',
+              enum: ['user', 'admin'],
+              example: 'user'
             }
           }
         ],
@@ -159,27 +317,15 @@ const swaggerDocument = {
             description: 'Monthly summary calculated successfully',
             content: {
               'application/json': {
-                schema: {
-                  type: 'object',
-                  properties: {
-                    month: { type: 'string', example: 'August' },
-                    totalExpenses: { type: 'number', example: 20 }
-                  }
-                },
                 example: {
-                  month: 'August',
+                  month: 'September',
                   totalExpenses: 20
                 }
               }
             }
           },
           '400': {
-            description: 'Invalid month number (must be between 1 and 12)',
-            content: {
-              'application/json': {
-                example: { message: 'Month must be a number between 1 and 12' }
-              }
-            }
+            description: 'Invalid month number (must be between 1 and 12)'
           },
           '500': {
             description: 'Internal Server Error'
@@ -191,7 +337,7 @@ const swaggerDocument = {
       put: {
         tags: ['Expenses'],
         summary: 'Update an existing expense',
-        description: 'Updates description, amount, category, or date of an expense by ID.',
+        description: 'Updates description, amount, category, date, or role of an expense by ID.',
         parameters: [
           {
             name: 'id',
@@ -211,6 +357,8 @@ const swaggerDocument = {
               schema: {
                 type: 'object',
                 properties: {
+                  userId: { type: 'string', example: 'user123' },
+                  role: { type: 'string', enum: ['user', 'admin'], example: 'user' },
                   description: { type: 'string', example: 'Dinner with friends' },
                   amount: { type: 'number', example: 35 },
                   category: { type: 'string', example: 'Food' },
@@ -227,18 +375,10 @@ const swaggerDocument = {
         },
         responses: {
           '200': {
-            description: 'Expense updated successfully',
-            content: {
-              'application/json': {
-                example: {
-                  message: 'Expense updated successfully',
-                  expense: { _id: '64e83c26fa2d192135a90101', description: 'Dinner with friends', amount: 35, category: 'Food', date: '2026-09-03T10:00:00.000Z' }
-                }
-              }
-            }
+            description: 'Expense updated successfully'
           },
           '400': {
-            description: 'Invalid ID format or invalid field values'
+            description: 'Invalid ID format or invalid values'
           },
           '404': {
             description: 'Expense not found'
@@ -269,12 +409,7 @@ const swaggerDocument = {
             description: 'Expense deleted successfully',
             content: {
               'application/json': {
-                schema: {
-                  type: 'object',
-                  properties: {
-                    message: { type: 'string', example: 'Expense deleted successfully' }
-                  }
-                }
+                example: { message: 'Expense deleted successfully' }
               }
             }
           },
@@ -290,8 +425,7 @@ const swaggerDocument = {
         }
       }
     }
-  },
-
+  }
 };
 
 // Function to attach Swagger UI middleware to the express app
