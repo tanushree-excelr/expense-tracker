@@ -1,35 +1,25 @@
-const Expense = require('../models/expenseModel');
+const Expense = require('../models/Expense');
 
+// add new expense
 const addExpense = async (req, res) => {
   try {
     const { description, amount, category, date } = req.body;
-    const userId = req.user.userId;
-    const role = req.user.role;
 
-    if (!description || description.trim() === '') {
+    if (!description) {
       return res.status(400).json({ message: 'Description cannot be empty' });
     }
 
-    if (!amount || typeof amount !== 'number' || amount <= 0) {
+    if (!amount || amount <= 0) {
       return res.status(400).json({ message: 'Amount must be greater than 0' });
     }
 
-    if (date) {
-      const inputDate = new Date(date);
-      const currentDate = new Date();
-
-      if (inputDate > currentDate) {
-        return res.status(400).json({ message: 'future date is not allowed' });
-      }
-    }
-
     const expense = await Expense.create({
-      userId,
-      role,
-      description: description.trim(),
+      userId: req.user.userId,
+      role: req.user.role,
+      description,
       amount,
-      category,
-      date
+      category: category || 'General',
+      date: date || new Date()
     });
 
     res.status(201).json({

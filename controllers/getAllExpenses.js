@@ -1,14 +1,20 @@
-const Expense = require('../models/expenseModel');
+const Expense = require('../models/Expense');
 
+// get all expenses
 const getAllExpenses = async (req, res) => {
   try {
     let filter = {};
 
     if (req.user.role === 'admin') {
+      // admin can view all expenses or filter by a specific userId
       if (req.query.userId) {
         filter.userId = req.query.userId.trim();
       }
     } else {
+      // normal user
+      if (req.query.userId && req.query.userId !== req.user.userId) {
+        return res.status(403).json({ message: 'Access denied: You can only view your own expenses' });
+      }
       filter.userId = req.user.userId;
     }
 

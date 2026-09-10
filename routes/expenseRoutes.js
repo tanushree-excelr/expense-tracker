@@ -9,11 +9,14 @@ const getExpenseSummary = require('../controllers/getExpenseSummary');
 const getMonthlySummary = require('../controllers/getMonthlySummary');
 const authMiddleware = require('../middleware/authMiddleware');
 
+// protect all expense routes with auth middleware
 router.use(authMiddleware);
 
+// summary routes
 router.get('/summary', getExpenseSummary);
 router.get('/summary/month/:month', getMonthlySummary);
 
+// expense CRUD routes
 router.post('/', addExpense);
 router.get('/', getAllExpenses);
 router.put('/:id', updateExpense);

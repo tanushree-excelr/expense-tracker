@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 
+// Schema
 const expenseSchema = new mongoose.Schema(
   {
     userId: {

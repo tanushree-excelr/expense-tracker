@@ -1,10 +1,11 @@
 const mongoose = require('mongoose');
-const Expense = require('../models/expenseModel');
+const Expense = require('../models/Expense');
 
+// update expense
 const updateExpense = async (req, res) => {
   try {
     const { id } = req.params;
-    const { userId, role, description, amount, category, date } = req.body;
+    const { description, amount, category, date, userId, role } = req.body;
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return res.status(400).json({ message: 'Invalid expense ID' });
@@ -18,24 +19,27 @@ const updateExpense = async (req, res) => {
       return res.status(400).json({ message: 'Amount must be greater than 0' });
     }
 
-    const expense = await Expense.findById(id);
+    // find expense (admin can find any expense, normal user can only find their own expense)
+    const filter = req.user.role === 'admin'
+      ? { _id: id }
+      : { _id: id, userId: req.user.userId };
+
+    const expense = await Expense.findOne(filter);
+
     if (!expense) {
       return res.status(404).json({ message: 'Expense not found' });
     }
 
-    if (req.user.role !== 'admin' && expense.userId !== req.user.userId) {
-      return res.status(403).json({ message: 'Access denied: You can only update your own expenses' });
-    }
-
+    // admin can update userId and role
     if (req.user.role === 'admin') {
-      if (userId !== undefined) expense.userId = userId.trim();
-      if (role !== undefined && ['user', 'admin'].includes(role)) expense.role = role;
+      if (userId) expense.userId = userId.trim();
+      if (role) expense.role = role;
     }
 
-    if (description !== undefined) expense.description = description.trim();
-    if (amount !== undefined) expense.amount = amount;
-    if (category !== undefined) expense.category = category;
-    if (date !== undefined) expense.date = date;
+    if (description) expense.description = description.trim();
+    if (amount) expense.amount = amount;
+    if (category) expense.category = category;
+    if (date) expense.date = date;
 
     const updatedExpense = await expense.save();
 

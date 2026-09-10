@@ -1,14 +1,14 @@
-const Expense = require('../models/expenseModel');
+const Expense = require('../models/Expense');
 
 const months = [
   'January', 'February', 'March', 'April', 'May', 'June',
   'July', 'August', 'September', 'October', 'November', 'December'
 ];
 
+// get monthly summary
 const getMonthlySummary = async (req, res) => {
   try {
-    const month = parseInt(req.params.month, 10);
-    const { userId, role } = req.query;
+    const month = parseInt(req.params.month);
 
     if (isNaN(month) || month < 1 || month > 12) {
       return res.status(400).json({ message: 'Month must be between 1 and 12' });
@@ -23,15 +23,19 @@ const getMonthlySummary = async (req, res) => {
     };
 
     if (req.user.role === 'admin') {
+      // admin can view monthly summary for all or filter by a specific userId
       if (req.query.userId) {
         query.userId = req.query.userId.trim();
       }
     } else {
+      // normal user
+      if (req.query.userId && req.query.userId !== req.user.userId) {
+        return res.status(403).json({ message: 'Access denied: You can only view your own summary' });
+      }
       query.userId = req.user.userId;
     }
 
     const expenses = await Expense.find(query);
-
     const totalExpenses = expenses.reduce((sum, item) => sum + item.amount, 0);
 
     res.status(200).json({

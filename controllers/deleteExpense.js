@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
-const Expense = require('../models/expenseModel');
+const Expense = require('../models/Expense');
 
+// delete expense
 const deleteExpense = async (req, res) => {
   try {
     const { id } = req.params;
@@ -9,13 +10,15 @@ const deleteExpense = async (req, res) => {
       return res.status(400).json({ message: 'Invalid expense ID' });
     }
 
-    const expense = await Expense.findById(id);
+    // find expense (admin can find)
+    const filter = req.user.role === 'admin'
+      ? { _id: id }
+      : { _id: id, userId: req.user.userId };
+
+    const expense = await Expense.findOne(filter);
+
     if (!expense) {
       return res.status(404).json({ message: 'Expense not found' });
-    }
-
-    if (req.user.role !== 'admin' && expense.userId !== req.user.userId) {
-      return res.status(403).json({ message: 'Access denied: You can only delete your own expenses' });
     }
 
     await Expense.findByIdAndDelete(id);
