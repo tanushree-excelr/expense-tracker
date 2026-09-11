@@ -20,22 +20,9 @@ const getMonthlySummary = async (req, res) => {
     const endDate = new Date(currentYear, month, 0, 23, 59, 59, 999);
 
     const query = {
+      userId: req.user.userId,
       date: { $gte: startDate, $lte: endDate }
     };
-
-    if (req.user.role === 'admin') {
-      // admin 
-      if (req.query.userId) {
-        query.userId = req.query.userId.trim();
-      }
-    } else {
-      // normal user
-      if (req.query.userId && req.query.userId !== req.user.userId) {
-        return res.status(403).json
-        ({ message: 'Access denied: You can only view your own summary' });
-      }
-      query.userId = req.user.userId;
-    }
 
     const expenses = await Expense.find(query);
     const totalExpenses = expenses.reduce((sum, item) => sum + item.amount, 0);

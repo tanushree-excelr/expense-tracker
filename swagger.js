@@ -21,19 +21,72 @@ const swaggerDocument = {
   tags: [
     {
       name: 'Authentication',
-      description: 'Login, logout and authentication endpoints'
+      description: 'Register, login, logout and authentication endpoints'
     },
     {
       name: 'Expenses',
-      description: 'Operations for managing user-specific and admin expenses (Protected by JWT)'
+      description: 'Operations for managing user expenses (Protected by JWT)'
+    },
+    {
+      name: 'Admin',
+      description: 'Admin-only endpoint for viewing all users and their expenses (Protected by JWT)'
     }
   ],
   paths: {
+    '/api/auth/register': {
+      post: {
+        tags: ['Authentication'],
+        summary: 'Register a new user',
+        description: 'Creates a new user account. Username must be unique. Password is stored encrypted using bcrypt.',
+        security: [],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                required: ['username', 'password'],
+                properties: {
+                  username: { type: 'string', example: 'tanushree' },
+                  password: { type: 'string', example: 'password123' }
+                }
+              },
+              example: {
+                username: 'tanushree',
+                password: 'password123'
+              }
+            }
+          }
+        },
+        responses: {
+          '201': {
+            description: 'User registered successfully',
+            content: {
+              'application/json': {
+                example: {
+                  message: 'User registered successfully',
+                  userId: 'tanushree'
+                }
+              }
+            }
+          },
+          '400': {
+            description: 'Missing username or password'
+          },
+          '409': {
+            description: 'Username already exists'
+          },
+          '500': {
+            description: 'Internal Server Error'
+          }
+        }
+      }
+    },
     '/api/auth/user-login': {
       post: {
         tags: ['Authentication'],
         summary: 'User Login',
-        description: 'Authenticates a regular user, automatically sets an HttpOnly cookie containing the JWT access token, and also returns the token in the JSON body for client-side storage (localStorage / Bearer header).',
+        // description: 'Authenticates a user, automatically sets an HttpOnly cookie containing the JWT access token, and also returns the token in the JSON body for client-side storage (localStorage / Bearer header).',
         security: [],
         requestBody: {
           required: true,
@@ -56,7 +109,7 @@ const swaggerDocument = {
         },
         responses: {
           '200': {
-            description: 'User login successful. Sets an HttpOnly cookie named "token" and returns access token.',
+            description: 'User login successful',
             headers: {
               'Set-Cookie': {
                 schema: {
@@ -69,9 +122,8 @@ const swaggerDocument = {
               'application/json': {
                 example: {
                   message: 'User login successful',
-                  token: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.exampleToken...',
-                  userId: 'tanushree',
-                  role: 'user'
+                  token: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
+                  userId: 'tanushree'
                 }
               }
             }
@@ -89,7 +141,7 @@ const swaggerDocument = {
       post: {
         tags: ['Authentication'],
         summary: 'Admin Login',
-        description: 'Authenticates an administrator (default credentials: username "admin", password "admin123"), sets an HttpOnly cookie, and returns the JWT access token.',
+        description: 'Authenticates the admin user with hardcoded credentials. Returns a JWT with admin privileges.',
         security: [],
         requestBody: {
           required: true,
@@ -100,26 +152,25 @@ const swaggerDocument = {
                 required: ['username', 'password'],
                 properties: {
                   username: { type: 'string', example: 'admin' },
-                  password: { type: 'string', example: 'admin123' }
+                  password: { type: 'string', example: 'admin@123' }
                 }
               },
               example: {
                 username: 'admin',
-                password: 'admin123'
+                password: 'admin@123'
               }
             }
           }
         },
         responses: {
           '200': {
-            description: 'Admin login successful. Sets an HttpOnly cookie named "token" and returns access token.',
+            description: 'Admin login successful',
             content: {
               'application/json': {
                 example: {
                   message: 'Admin login successful',
-                  token: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.exampleAdminToken...',
-                  userId: 'admin',
-                  role: 'admin'
+                  token: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
+                  userId: 'admin'
                 }
               }
             }
@@ -129,16 +180,20 @@ const swaggerDocument = {
           },
           '401': {
             description: 'Invalid admin credentials'
+          },
+          '500': {
+            description: 'Internal Server Error'
           }
         }
       }
     },
+
     '/api/auth/logout': {
       post: {
         tags: ['Authentication'],
         summary: 'Logout',
-        description: 'Clears the HttpOnly access token cookie.',
-        security: [],
+        description: 'Clears the HttpOnly access token cookie. Requires a valid JWT token.',
+        security: [{ bearerAuth: [] }],
         responses: {
           '200': {
             description: 'Logged out successfully',
@@ -149,6 +204,9 @@ const swaggerDocument = {
                 }
               }
             }
+          },
+          '401': {
+            description: 'Unauthorized - Missing or invalid token'
           }
         }
       }
@@ -158,7 +216,7 @@ const swaggerDocument = {
         tags: ['Expenses'],
         summary: 'Add a new expense',
         description: 'Creates a new expense record automatically associated with the currently authenticated user.',
-        security: [{ bearerAuth: [] }, { cookieAuth: [] }],
+        security: [{ bearerAuth: [] }],
         requestBody: {
           required: true,
           content: {
@@ -191,7 +249,6 @@ const swaggerDocument = {
                   expense: {
                     _id: '64e83c26fa2d192135a90101',
                     userId: 'tanushree',
-                    role: 'user',
                     description: 'Lunch with team',
                     amount: 25.5,
                     category: 'Food',
@@ -215,30 +272,17 @@ const swaggerDocument = {
       get: {
         tags: ['Expenses'],
         summary: 'Get all expenses',
-        description: 'Retrieves expenses for the authenticated user. If the caller is an admin, all users expenses are returned (or filtered by ?userId=).',
-        security: [{ bearerAuth: [] }, { cookieAuth: [] }],
-        parameters: [
-          {
-            name: 'userId',
-            in: 'query',
-            required: false,
-            description: '(Admin only) Filter expenses by specific userId',
-            schema: {
-              type: 'string',
-              example: 'tanushree'
-            }
-          }
-        ],
+        description: 'Retrieves all expenses for the authenticated user.',
+        security: [{ bearerAuth: [] }],
         responses: {
           '200': {
-            description: 'A list of expenses belonging to the user (or all expenses for admin)',
+            description: 'A list of expenses belonging to the user',
             content: {
               'application/json': {
                 example: [
                   {
                     _id: '64e83c26fa2d192135a90101',
                     userId: 'tanushree',
-                    role: 'user',
                     description: 'Lunch with team',
                     amount: 25.5,
                     category: 'Food',
@@ -261,20 +305,8 @@ const swaggerDocument = {
       get: {
         tags: ['Expenses'],
         summary: 'Get total summary of expenses',
-        description: 'Returns total monetary sum for the authenticated user (or all users if admin).',
-        security: [{ bearerAuth: [] }, { cookieAuth: [] }],
-        parameters: [
-          {
-            name: 'userId',
-            in: 'query',
-            required: false,
-            description: '(Admin only) Filter summary by specific userId',
-            schema: {
-              type: 'string',
-              example: 'tanushree'
-            }
-          }
-        ],
+        description: 'Returns total monetary sum for the authenticated user.',
+        security: [{ bearerAuth: [] }],
         responses: {
           '200': {
             description: 'Total expenses calculated successfully',
@@ -299,8 +331,8 @@ const swaggerDocument = {
       get: {
         tags: ['Expenses'],
         summary: 'Get monthly summary for the current year',
-        description: 'Calculates total expenses for a specific month (1-12) for the authenticated user (or all users if admin).',
-        security: [{ bearerAuth: [] }, { cookieAuth: [] }],
+        description: 'Calculates total expenses for a specific month (1-12) for the authenticated user.',
+        security: [{ bearerAuth: [] }],
         parameters: [
           {
             name: 'month',
@@ -312,16 +344,6 @@ const swaggerDocument = {
               minimum: 1,
               maximum: 12,
               example: 9
-            }
-          },
-          {
-            name: 'userId',
-            in: 'query',
-            required: false,
-            description: '(Admin only) Filter monthly summary by specific userId',
-            schema: {
-              type: 'string',
-              example: 'tanushree'
             }
           }
         ],
@@ -353,8 +375,8 @@ const swaggerDocument = {
       put: {
         tags: ['Expenses'],
         summary: 'Update an existing expense',
-        description: 'Updates an expense by ID. Non-admin users are strictly forbidden from updating expenses owned by other users.',
-        security: [{ bearerAuth: [] }, { cookieAuth: [] }],
+        description: 'Updates an expense by ID. Users can only update their own expenses.',
+        security: [{ bearerAuth: [] }],
         parameters: [
           {
             name: 'id',
@@ -398,9 +420,6 @@ const swaggerDocument = {
           '401': {
             description: 'Unauthorized - Missing or invalid token'
           },
-          '403': {
-            description: 'Forbidden - Cannot update another user expense'
-          },
           '404': {
             description: 'Expense not found'
           },
@@ -412,8 +431,8 @@ const swaggerDocument = {
       delete: {
         tags: ['Expenses'],
         summary: 'Delete an expense',
-        description: 'Deletes an expense by ID. Non-admin users can only delete their own expenses.',
-        security: [{ bearerAuth: [] }, { cookieAuth: [] }],
+        description: 'Deletes an expense by ID. Users can only delete their own expenses.',
+        security: [{ bearerAuth: [] }],
         parameters: [
           {
             name: 'id',
@@ -441,14 +460,54 @@ const swaggerDocument = {
           '401': {
             description: 'Unauthorized - Missing or invalid token'
           },
-          '403': {
-            description: 'Forbidden - Cannot delete another user expense'
-          },
           '404': {
             description: 'Expense not found'
           },
           '500': {
             description: 'Internal Server Error'
+          }
+        }
+      }
+    },
+    '/api/admin/users': {
+      get: {
+        tags: ['Admin'],
+        summary: 'Get all registered users with expenses',
+        description: 'Returns all non-admin users with their expenses array populated. Admin JWT token required.',
+        security: [{ bearerAuth: [] }],
+        responses: {
+          '200': {
+            description: 'All users retrieved with populated expenses',
+            content: {
+              'application/json': {
+                example: {
+                  count: 1,
+                  users: [
+                    {
+                      _id: '64e83c26fa2d192135a90301',
+                      username: 'tanushree',
+                      expenses: [
+                        {
+                          _id: '64e83c26fa2d192135a90101',
+                          userId: 'tanushree',
+                          description: 'Groceries',
+                          amount: 500,
+                          category: 'Food',
+                          date: '2026-09-11T06:29:46.898Z'
+                        }
+                      ],
+                      isAdmin: false
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          '401': {
+            description: 'Unauthorized - Missing or invalid token'
+          },
+          '403': {
+            description: 'Access denied - Admin privileges required'
           }
         }
       }
@@ -461,12 +520,6 @@ const swaggerDocument = {
         scheme: 'bearer',
         bearerFormat: 'JWT',
         description: 'Enter your JWT token obtained from /api/auth/user-login or /api/auth/admin-login'
-      },
-      cookieAuth: {
-        type: 'apiKey',
-        in: 'cookie',
-        name: 'token',
-        description: 'HttpOnly cookie set automatically upon user or admin login'
       }
     }
   }

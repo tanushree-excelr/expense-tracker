@@ -1,14 +1,17 @@
 const jwt = require('jsonwebtoken');
 
-// auth middleware
+// auth middleware 
 const authMiddleware = (req, res, next) => {
   try {
-    let token = null;
+    let token = req.headers.authorization;
 
-    if (req.cookies && req.cookies.token) {
-      token = req.cookies.token;
-    } else if (req.headers.authorization) {
-      token = req.headers.authorization.replace('Bearer ', '');
+    if (!token) {
+      return res.status(401).json
+      ({ message: 'Access denied. No token provided.' });
+    }
+
+    if (token.startsWith('Bearer ')) {
+      token = token.slice(7).trim();
     }
 
     if (!token) {
@@ -17,12 +20,11 @@ const authMiddleware = (req, res, next) => {
     }
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET || 'expense_trackeR');
-    req.user = decoded;
+    req.user = decoded; 
 
     next();
   } catch (error) {
-    return res.status(401).json
-    ({ message: 'Invalid or expired token' });
+    return res.status(401).json({ message: 'Invalid or expired token' });
   }
 };
 

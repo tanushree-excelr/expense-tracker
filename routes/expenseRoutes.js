@@ -13,13 +13,13 @@ const authMiddleware = require('../middleware/authMiddleware');
 router.use(authMiddleware);
 
 // summary routes
-router.get('/summary', getExpenseSummary);
-router.get('/summary/month/:month', getMonthlySummary);
+router.get('/summary', authMiddleware, getExpenseSummary);
+router.get('/summary/month/:month', authMiddleware, getMonthlySummary);
 
 // expense CRUD routes
-router.post('/', addExpense);
-router.get('/', getAllExpenses);
-router.put('/:id', updateExpense);
-router.delete('/:id', deleteExpense);
+router.post('/', authMiddleware, addExpense);
+router.get('/', authMiddleware, getAllExpenses);
+router.put('/:id', authMiddleware, updateExpense);
+router.delete('/:id', authMiddleware, deleteExpense);
 
 module.exports = router;

@@ -1,4 +1,5 @@
 const Expense = require('../models/Expense');
+const User = require('../models/User');
 
 // add new expense
 const addExpense = async (req, res) => {
@@ -17,19 +18,25 @@ const addExpense = async (req, res) => {
 
     const expense = await Expense.create({
       userId: req.user.userId,
-      role: req.user.role,
       description,
       amount,
       category: category || 'General',
       date: date || new Date()
     });
 
+    //  array
+    await User.findOneAndUpdate(
+      { username: req.user.userId },
+      { $push: { expenses: expense._id , description: expense.description } }
+    );
+
     res.status(201).json({
       message: 'Expense added successfully',
       expense
     });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json
+    ({ message: error.message });
   }
 };
 

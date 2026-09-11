@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const Expense = require('../models/Expense');
+const User = require('../models/User');
 
 // delete expense
 const deleteExpense = async (req, res) => {
@@ -7,23 +8,23 @@ const deleteExpense = async (req, res) => {
     const { id } = req.params;
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
-      return res.status(400).json
-      ({ message: 'Invalid expense ID' });
+      return res.status(400).json({ message: 'Invalid expense ID' });
     }
 
-    // find expense (admin)
-    const filter = req.user.role === 'admin'
-      ? { _id: id }
-      : { _id: id, userId: req.user.userId };
-
-    const expense = await Expense.findOne(filter);
+    // find expense 
+    const expense = await Expense.findOne({ _id: id, userId: req.user.userId });
 
     if (!expense) {
-      return res.status(404).json
-      ({ message: 'Expense not found' });
+      return res.status(404).json({ message: 'Expense not found' });
     }
 
     await Expense.findByIdAndDelete(id);
+
+    // pull expense id 
+    await User.findOneAndUpdate(
+      { username: req.user.userId },
+      { $pull: { expenses: expense._id } }
+    );
 
     res.status(200).json
     ({ message: 'Expense deleted successfully' });

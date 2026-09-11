@@ -5,7 +5,10 @@ const cookieParser = require('cookie-parser');
 const connectDB = require('./config/db');
 const authRoutes = require('./routes/authRoutes');
 const expenseRoutes = require('./routes/expenseRoutes');
+const adminRoutes = require('./routes/adminRoutes');
 const setupSwagger = require('./swagger');
+const User = require('./models/User');
+const bcrypt = require('bcrypt');
 
 const app = express();
 
@@ -13,11 +16,29 @@ app.use(cors({ origin: true, credentials: true }));
 app.use(cookieParser());
 app.use(express.json());
 
-connectDB();
+connectDB().then(async () => {
+  // seed admin user on startup if not exists
+  try {
+    const adminExists = await User.findOne({ username: 'admin' });
+    if (!adminExists) {
+      const hashedPassword = await bcrypt.hash('admin@123', 10);
+      await User.create({
+        username: 'admin',
+        password: hashedPassword,
+        isAdmin: true
+      });
+      console.log('Admin user seeded successfully');
+    }
+  } catch (err) {
+    console.error('Error seeding admin user:', err.message);
+  }
+});
+
 setupSwagger(app);
 
 app.use('/api/auth', authRoutes);
 app.use('/api/expenses', expenseRoutes);
+app.use('/api/admin', adminRoutes);
 
 app.get('/', (req, res) => {
   res.send('Expense Tracker API is running');

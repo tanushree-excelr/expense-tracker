@@ -8,11 +8,6 @@ const expenseSchema = new mongoose.Schema(
       required: true,
       trim: true
     },
-    role: {
-      type: String,
-      enum: ['user', 'admin'],
-      default: 'user'
-    },
     description: {
       type: String,
       required: true,

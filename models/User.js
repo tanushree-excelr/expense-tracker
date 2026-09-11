@@ -1,6 +1,5 @@
 const mongoose = require('mongoose');
 
-// Schema 
 const userSchema = new mongoose.Schema(
   {
     username: {
@@ -9,15 +8,23 @@ const userSchema = new mongoose.Schema(
       unique: true,
       trim: true
     },
+
     password: {
       type: String,
       required: true
     },
-    role: {
-      type: String,
-      enum: ['user', 'admin'],
-      default: 'user'
-    }
+
+    isAdmin: {
+      type: Boolean,
+      default: false
+    },
+
+    expenses: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Expense'
+      }
+    ]
   },
   {
     versionKey: false
