@@ -7,7 +7,8 @@ const deleteExpense = async (req, res) => {
     const { id } = req.params;
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
-      return res.status(400).json({ message: 'Invalid expense ID' });
+      return res.status(400).json
+      ({ message: 'Invalid expense ID' });
     }
 
     // find expense (admin can find)
@@ -18,14 +19,17 @@ const deleteExpense = async (req, res) => {
     const expense = await Expense.findOne(filter);
 
     if (!expense) {
-      return res.status(404).json({ message: 'Expense not found' });
+      return res.status(404).json
+      ({ message: 'Expense not found' });
     }
 
     await Expense.findByIdAndDelete(id);
 
-    res.status(200).json({ message: 'Expense deleted successfully' });
+    res.status(200).json
+    ({ message: 'Expense deleted successfully' });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json
+    ({ message: error.message });
   }
 };
 

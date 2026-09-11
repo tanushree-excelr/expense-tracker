@@ -11,7 +11,8 @@ const getMonthlySummary = async (req, res) => {
     const month = parseInt(req.params.month);
 
     if (isNaN(month) || month < 1 || month > 12) {
-      return res.status(400).json({ message: 'Month must be between 1 and 12' });
+      return res.status(400).json
+      ({ message: 'Month must be between 1 and 12' });
     }
 
     const currentYear = new Date().getFullYear();
@@ -30,7 +31,8 @@ const getMonthlySummary = async (req, res) => {
     } else {
       // normal user
       if (req.query.userId && req.query.userId !== req.user.userId) {
-        return res.status(403).json({ message: 'Access denied: You can only view your own summary' });
+        return res.status(403).json
+        ({ message: 'Access denied: You can only view your own summary' });
       }
       query.userId = req.user.userId;
     }

@@ -5,7 +5,7 @@ const swaggerDocument = {
   info: {
     title: 'Expense Tracker API',
     version: '1.0.0',
-    description: 'A secure beginner-level Expense Tracker REST API built with Node.js, Express, and MongoDB. Secured with JWT Access Tokens stored in HttpOnly Cookies and Bearer Tokens, featuring user-isolated data access and administrator visibility.'
+    description: 'expense'
   },
   servers: [
     {

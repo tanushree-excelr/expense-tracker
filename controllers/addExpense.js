@@ -6,11 +6,13 @@ const addExpense = async (req, res) => {
     const { description, amount, category, date } = req.body;
 
     if (!description) {
-      return res.status(400).json({ message: 'Description cannot be empty' });
+      return res.status(400).json
+      ({ message: 'Description cannot be empty' });
     }
 
     if (!amount || amount <= 0) {
-      return res.status(400).json({ message: 'Amount must be greater than 0' });
+      return res.status(400).json
+      ({ message: 'Amount must be greater than 0' });
     }
 
     const expense = await Expense.create({

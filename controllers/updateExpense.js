@@ -8,18 +8,21 @@ const updateExpense = async (req, res) => {
     const { description, amount, category, date, userId, role } = req.body;
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
-      return res.status(400).json({ message: 'Invalid expense ID' });
+      return res.status(400).json
+      ({ message: 'Invalid expense ID' });
     }
 
     if (description !== undefined && description.trim() === '') {
-      return res.status(400).json({ message: 'Description cannot be empty' });
+      return res.status(400).json
+      ({ message: 'Description cannot be empty' });
     }
 
     if (amount !== undefined && (typeof amount !== 'number' || amount <= 0)) {
-      return res.status(400).json({ message: 'Amount must be greater than 0' });
+      return res.status(400).json
+      ({ message: 'Amount must be greater than 0' });
     }
 
-    // find expense (admin can find any expense, normal user can only find their own expense)
+    // find expense (admin can find)
     const filter = req.user.role === 'admin'
       ? { _id: id }
       : { _id: id, userId: req.user.userId };
@@ -30,7 +33,7 @@ const updateExpense = async (req, res) => {
       return res.status(404).json({ message: 'Expense not found' });
     }
 
-    // admin can update userId and role
+    // admin can update
     if (req.user.role === 'admin') {
       if (userId) expense.userId = userId.trim();
       if (role) expense.role = role;

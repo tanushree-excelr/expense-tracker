@@ -13,7 +13,8 @@ const getExpenseSummary = async (req, res) => {
     } else {
       // normal user
       if (req.query.userId && req.query.userId !== req.user.userId) {
-        return res.status(403).json({ message: 'Access denied: You can only view your own summary' });
+        return res.status(403).json
+        ({ message: 'Access denied: You can only view your own summary' });
       }
       filter.userId = req.user.userId;
     }
