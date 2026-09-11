@@ -24,7 +24,7 @@ const getMonthlySummary = async (req, res) => {
     };
 
     if (req.user.role === 'admin') {
-      // admin can view monthly summary for all or filter by a specific userId
+      // admin 
       if (req.query.userId) {
         query.userId = req.query.userId.trim();
       }

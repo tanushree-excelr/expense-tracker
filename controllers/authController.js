@@ -31,7 +31,7 @@ const userLogin = async (req, res) => {
 
     let user = await User.findOne({ username });
 
-    // if user does not exist, create it
+    // if user does not exist
     if (!user) {
       user = await User.create
       ({ username, password, role: 'user' });

@@ -11,7 +11,7 @@ const deleteExpense = async (req, res) => {
       ({ message: 'Invalid expense ID' });
     }
 
-    // find expense (admin can find)
+    // find expense (admin)
     const filter = req.user.role === 'admin'
       ? { _id: id }
       : { _id: id, userId: req.user.userId };

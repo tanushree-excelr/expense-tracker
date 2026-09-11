@@ -22,7 +22,7 @@ const updateExpense = async (req, res) => {
       ({ message: 'Amount must be greater than 0' });
     }
 
-    // find expense (admin can find)
+    // find expense by admin
     const filter = req.user.role === 'admin'
       ? { _id: id }
       : { _id: id, userId: req.user.userId };

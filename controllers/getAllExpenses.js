@@ -6,7 +6,7 @@ const getAllExpenses = async (req, res) => {
     let filter = {};
 
     if (req.user.role === 'admin') {
-      // admin can view all expenses or filter by a specific userId
+      // admin can view
       if (req.query.userId) {
         filter.userId = req.query.userId.trim();
       }
