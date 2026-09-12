@@ -1,7 +1,7 @@
 // admin middleware
 const adminMiddleware = (req, res, next) => {
   try {
-    if (!req.user || !req.user.isAdmin) {
+    if (!req.user.isAdmin) {
       return res.status(403).json
         ({ message: 'Access denied' });
     }

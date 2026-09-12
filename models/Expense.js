@@ -27,9 +27,6 @@ const expenseSchema = new mongoose.Schema(
       trim: true,
       default: 'General'
     }
-  },
-  {
-    versionKey: false
   }
 );
 
